@@ -1,0 +1,74 @@
+#! /usr/bin/env python
+# coding=utf-8
+# sound-theme-chooser - A command line utility to choose a sound theme
+#
+# Copyright © 2012, Elad Alfassa <elad@fedoraproject.org>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+# We only support GSettings at the moment, patches welcome for KDE support
+from gi.repository import Gio
+from gi.repository import GLib
+import os.path
+import os
+import sys
+import argparse
+settings = Gio.Settings.new('org.gnome.desktop.sound')
+
+def get_themes():
+    return_list = []
+    if os.path.isdir('/usr/share/sounds'):
+        for item in os.listdir('/usr/share/sounds'):
+            item_path = os.path.join('/usr/share/sounds', item)
+            index_file = os.path.join(item_path, 'index.theme')
+            if os.path.isdir(item_path) and os.path.isfile(index_file):
+                index = GLib.KeyFile.new()
+                GLib.KeyFile.load_from_file(index, index_file,
+                                                   GLib.KeyFileFlags.NONE)
+                try:
+                    hidden = index.get_value('Sound Theme', 'Hidden')
+                except:
+                    hidden = False
+                if not hidden:
+                    return_list.append(item)
+    return return_list
+
+def get_current_theme():
+    return settings.get_string('theme-name')
+
+def set_theme(name):
+    if name in get_themes():
+        return settings.set_value('theme-name', GLib.Variant('s', name))
+    else:
+        return False
+
+def main():
+    parser = argparse.ArgumentParser(description='A command line utility to choose a sound theme')
+    parser.add_argument('theme_name', nargs='?')
+    parser.add_argument('--list', dest='list', action='store_true', default=False, help='List avilable sound themes')
+    args = parser.parse_args()
+    if args.list or args.theme_name is None:
+        print 'Installed themes:\n'
+        current_theme = get_current_theme()
+        for theme in get_themes():
+            if theme == str(current_theme):
+                print '%s ←' % theme
+            else:
+                print theme
+    elif args.theme_name is not None:
+        if set_theme(args.theme_name):
+            print 'Success!'
+            sys.exit(0)
+        else:
+            print 'Failed to set theme to the specified value, is this theme installed?'
+            sys.exit(1)
+if __name__ == '__main__':
+    main()

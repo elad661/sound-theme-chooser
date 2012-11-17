@@ -1,0 +1,9 @@
+sound-theme-chooser is a small CLI utiltiy to view list of installed sound themes and change the default.
+
+Dependecies:
+Python2.7
+pygobject
+Recnet GLib with Introspection support
+Recent GIO with Introspection support
+
+Made by Elad Alfassa <elad@fedoraproject.org>
