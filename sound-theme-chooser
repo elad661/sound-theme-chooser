@@ -15,30 +15,34 @@
 #    GNU General Public License for more details.
 
 # We only support GSettings at the moment, patches welcome for KDE support
-from gi.repository import Gio
-from gi.repository import GLib
+from gi.repository import Gio, GLib
 import os.path
 import os
 import sys
 import argparse
 settings = Gio.Settings.new('org.gnome.desktop.sound')
 
+def check_hidden(path):
+    index = GLib.KeyFile.new()
+    GLib.KeyFile.load_from_file(index, path, GLib.KeyFileFlags.NONE)
+    try:
+        hidden = index.get_value('Sound Theme', 'Hidden')
+    except:
+        hidden = False
+    return hidden
+
 def get_themes():
     return_list = []
-    if os.path.isdir('/usr/share/sounds'):
-        for item in os.listdir('/usr/share/sounds'):
-            item_path = os.path.join('/usr/share/sounds', item)
-            index_file = os.path.join(item_path, 'index.theme')
-            if os.path.isdir(item_path) and os.path.isfile(index_file):
-                index = GLib.KeyFile.new()
-                GLib.KeyFile.load_from_file(index, index_file,
-                                                   GLib.KeyFileFlags.NONE)
-                try:
-                    hidden = index.get_value('Sound Theme', 'Hidden')
-                except:
-                    hidden = False
-                if not hidden:
-                    return_list.append(item)
+    dirs = [os.path.join(d, "sounds") for d in GLib.get_system_data_dirs() +
+                                            tuple([GLib.get_user_data_dir()])]
+    for theme_dir in dirs:
+        if os.path.isdir(theme_dir):
+            for item in os.listdir(theme_dir):
+                item_path = os.path.join(theme_dir, item)   
+                index_file = os.path.join(item_path, 'index.theme')
+                if os.path.isdir(item_path) and os.path.isfile(index_file):
+                    if not check_hidden(index_file):
+                        return_list.append(item)
     return return_list
 
 def get_current_theme():
@@ -51,9 +55,12 @@ def set_theme(name):
         return False
 
 def main():
-    parser = argparse.ArgumentParser(description='A command line utility to choose a sound theme')
+    parser = argparse.ArgumentParser(
+            description='A command line utility to choose a sound theme')
     parser.add_argument('theme_name', nargs='?')
-    parser.add_argument('--list', dest='list', action='store_true', default=False, help='List avilable sound themes')
+    parser.add_argument('--list', dest='list', action='store_true',
+                        default=False,
+                        help='List avilable sound themes')
     args = parser.parse_args()
     if args.list or args.theme_name is None:
         print 'Installed themes:\n'
