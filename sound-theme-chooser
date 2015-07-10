@@ -22,6 +22,7 @@ import sys
 import argparse
 settings = Gio.Settings.new('org.gnome.desktop.sound')
 
+
 def check_hidden(path):
     index = GLib.KeyFile.new()
     GLib.KeyFile.load_from_file(index, path, GLib.KeyFileFlags.NONE)
@@ -31,22 +32,25 @@ def check_hidden(path):
         hidden = False
     return hidden
 
+
 def get_themes():
     return_list = []
     dirs = [os.path.join(d, "sounds") for d in GLib.get_system_data_dirs() +
-                                            tuple([GLib.get_user_data_dir()])]
+            tuple([GLib.get_user_data_dir()])]
     for theme_dir in dirs:
         if os.path.isdir(theme_dir):
             for item in os.listdir(theme_dir):
-                item_path = os.path.join(theme_dir, item)   
+                item_path = os.path.join(theme_dir, item)
                 index_file = os.path.join(item_path, 'index.theme')
                 if os.path.isdir(item_path) and os.path.isfile(index_file):
                     if not check_hidden(index_file):
                         return_list.append(item)
     return return_list
 
+
 def get_current_theme():
     return settings.get_string('theme-name')
+
 
 def set_theme(name):
     if name in get_themes():
@@ -54,9 +58,9 @@ def set_theme(name):
     else:
         return False
 
+
 def main():
-    parser = argparse.ArgumentParser(
-            description='A command line utility to choose a sound theme')
+    parser = argparse.ArgumentParser(description='A command line utility to choose a sound theme')
     parser.add_argument('theme_name', nargs='?')
     parser.add_argument('--list', dest='list', action='store_true',
                         default=False,
