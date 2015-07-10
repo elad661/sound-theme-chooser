@@ -36,7 +36,7 @@ def check_hidden(path):
 def get_themes():
     return_list = []
     dirs = [os.path.join(d, "sounds") for d in GLib.get_system_data_dirs() +
-            tuple([GLib.get_user_data_dir()])]
+            [GLib.get_user_data_dir()]]
     for theme_dir in dirs:
         if os.path.isdir(theme_dir):
             for item in os.listdir(theme_dir):
